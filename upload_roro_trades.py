@@ -92,6 +92,14 @@ def main():
 
     print(f'\nDone. Inserted {total} rows.')
 
+    print('Refreshing dashboard cache (mv_roro_trades_enriched, mv_roro_dashboard_data)...')
+    resp = requests.post(f'{SUPABASE_URL}/rest/v1/rpc/refresh_roro_dashboard_cache', headers=headers, json={})
+    if resp.status_code >= 300:
+        print(f'WARNING: cache refresh failed ({resp.status_code}): {resp.text[:500]}')
+        print('Run manually in Supabase SQL editor: select refresh_roro_dashboard_cache();')
+    else:
+        print('Dashboard cache refreshed.')
+
 
 if __name__ == '__main__':
     main()

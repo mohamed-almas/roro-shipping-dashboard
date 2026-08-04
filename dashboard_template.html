@@ -190,9 +190,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-s
       </div>
     </section>
     <section class="insights-section">
-      <h2>Market Intelligence &amp; Executive Insights <span class="badge">Data-derived</span></h2>
-      <!-- MARKET_COMMENTARY: refresh with external research -->
+      <h2>Market Intelligence &amp; Executive Insights <span class="badge">Data-derived + Industry Research</span></h2>
       <div class="insight-grid" id="global-insight-grid"></div>
+      <div class="chart-sub" style="margin-top:10px;">Industry context sourced Aug 2026 from Lloyd's List, Xinde Marine News, Veson Nautical, Mordor Intelligence, ECG, Gasgoo, breakbulk.news.</div>
     </section>
   </section>
 
@@ -529,6 +529,11 @@ class Dashboard{
     if(topOperator) insights.push({cls:'o2', h:'Operator concentration', p:`${topOperator.operator} leads the market with ${fmt(topOperator.total_ceu_deployed)} CEU deployed across ${fmtNum(topOperator.voyages)} voyages and ${topOperator.vessels_deployed} vessels — the largest deployed fleet footprint in the dataset.`});
     if(topPort) insights.push({cls:'o3', h:'Busiest gateway', p:`${topPort.port_name} (${topPort.country}) recorded the highest call volume with ${fmtNum(topPort.port_calls)} port calls and ${fmt(topPort.ceu_handled)} CEU handled, at an average total port time of ${fmtDec(topPort.avg_port_days_total)} days.`});
     if(pctcShare) insights.push({cls:'o4', h:'Fleet segment mix', p:`PCTC (Pure Car & Truck Carrier) tonnage accounts for ${pctcShare}% of tracked voyages, with the remainder on dedicated RoRo Cargo vessels — reflecting the dominance of finished-vehicle logistics in this dataset.`});
+
+    // Industry-sourced market intelligence (see market_intelligence_commentary.md for full sourcing)
+    insights.push({cls:'o2', h:'Fleet supply: delivery bulge peaking', p:'67 PCTCs are due for delivery in 2026 after a record 75 delivered in 2025 (133 ships / ~1m CEU added 2023-2025), pushing fleet growth ~9% in 2026 vs. slower cargo demand growth. Newbuilding orders, which collapsed to just 9 in 2025, rebounded to 37 by mid-2026 — led by MSC\'s Global Car Carriers, Eastern Pacific Shipping and newcomer Zhongnan Shipping. (Lloyd\'s List, Xinde Marine News, Aug 2026)'});
+    insights.push({cls:'o3', h:'Charter rates: cooling from historic highs', p:'One-year timecharter rates for a 6,500 CEU PCTC stand at ~$55,000/day in 2026 — nearly 3x the 2010-2020 average of $19,400/day — as the market corrects from 2024 peaks but stays well above historical norms. A widening spread is emerging between efficient, dual-fuel, EU-compliant tonnage and older/smaller ships. (European Maritime Finance, MaritimeShips.com)'});
+    insights.push({cls:'o4', h:'Demand: China export machine dominates', p:'China shipped over 7m vehicles globally in 2025 and is on pace for ~10m in 2026 (+63% YoY Jan-May). Ro-Ro capacity cannot absorb the full volume — an estimated 2m vehicles are moving on container ships as overflow in 2026, up from ~1m in 2025, as Q1 2026 China-to-Europe volumes hit a record 2.23m vehicles (+57% YoY). (Veson Nautical, ECG, CAAM)'});
     document.getElementById('global-insight-grid').innerHTML = insights.map(i=>`<div class="insight-card ${i.cls}"><h4>${i.h}</h4><p>${i.p}</p></div>`).join('');
   }
 
@@ -587,6 +592,7 @@ class Dashboard{
     if(lanes[0]) insights.push({cls:'', h:'Leading corridor', p:`${lanes[0].origin_region} → ${lanes[0].destination_region} leads all tracked corridors with ${fmt(lanes[0].total_ceu_deployed)} CEU deployed over ${fmtNum(lanes[0].voyages)} voyages.`});
     const intraRegional = lanes.filter(l=>l.origin_region===l.destination_region);
     if(intraRegional.length) insights.push({cls:'o2', h:'Intra-regional dominance', p:`${intraRegional.length} of the top ${lanes.length} lanes are intra-regional (same origin/destination region), led by ${intraRegional[0].origin_region}, underscoring the short-sea, feeder-heavy nature of much of Ro-Ro trade.`});
+    insights.push({cls:'o3', h:'Routing: Red Sea avoidance now structural', p:'Cape of Good Hope diversions add 10-14 days to Asia-Europe voyages vs. the Suez routing, and this is now treated as a structural practice rather than temporary, 2+ years into the Red Sea disruption. Notably, China-controlled tonnage is increasingly transiting Suez directly while European and Japanese operators continue routing via the Cape. (ECG, Lloyd\'s List, Aug 2026)'});
     document.getElementById('regional-insight-grid') && (document.getElementById('regional-insight-grid').innerHTML = insights.map(i=>`<div class="insight-card ${i.cls}"><h4>${i.h}</h4><p>${i.p}</p></div>`).join(''));
   }
   sortRegional(col){

@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 .DS_Store
 .env
+
+# Proprietary Esgian source data - not for the public repo; lives locally / in Supabase only
+Data/
+References/
