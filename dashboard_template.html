@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ro-Ro Shipping Executive Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<style>
+:root{
+  --bg-primary:#eef1f5;
+  --bg-card:#ffffff;
+  --bg-header:#0b2545;
+  --bg-header2:#13315c;
+  --text-primary:#1b2733;
+  --text-secondary:#5b6b7c;
+  --text-on-dark:#ffffff;
+  --c1:#1b6ca8;
+  --c2:#ef8a17;
+  --c3:#2a9d8f;
+  --c4:#e76f51;
+  --c5:#8d6fb8;
+  --c6:#4b8b3b;
+  --c7:#c9444d;
+  --c8:#5b6b7c;
+  --positive:#1e8a4c;
+  --negative:#d1473a;
+  --radius:10px;
+  --gap:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.5;font-size:14px;}
+.dashboard-container{max-width:1500px;margin:0 auto;padding:18px;}
+.dashboard-header{background:linear-gradient(120deg,var(--bg-header),var(--bg-header2));color:var(--text-on-dark);padding:22px 28px;border-radius:var(--radius);margin-bottom:var(--gap);}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px;}
+.header-top h1{font-size:21px;font-weight:700;letter-spacing:.2px;}
+.header-top .subtitle{font-size:12.5px;color:#bcd2ec;margin-top:4px;}
+.header-meta{font-size:11.5px;color:#9db8d6;text-align:right;}
+.filters{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:rgba(255,255,255,.07);padding:12px 14px;border-radius:8px;}
+.filter-group{display:flex;flex-direction:column;gap:3px;}
+.filter-group label{font-size:10.5px;color:#bcd2ec;text-transform:uppercase;letter-spacing:.5px;}
+.filter-group select{padding:7px 10px;border:1px solid rgba(255,255,255,.25);border-radius:6px;background:rgba(255,255,255,.12);color:#fff;font-size:13px;min-width:150px;}
+.filter-group select option{background:#0b2545;color:#fff;}
+.breadcrumb{font-size:12px;color:#cfe0f3;margin-left:auto;align-self:center;}
+.breadcrumb b{color:#fff;}
+
+.segmented{display:flex;background:rgba(255,255,255,.12);border-radius:7px;padding:3px;gap:2px;}
+.segmented button{background:transparent;border:none;color:#cfe0f3;padding:6px 14px;font-size:12px;font-weight:600;border-radius:5px;cursor:pointer;letter-spacing:.3px;}
+.segmented button.active{background:#fff;color:var(--bg-header);}
+
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:var(--gap);background:var(--bg-card);border-radius:var(--radius);padding:6px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.tabs button{flex:1;min-width:110px;background:transparent;border:none;padding:10px 12px;font-size:12.5px;font-weight:700;color:var(--text-secondary);border-radius:7px;cursor:pointer;letter-spacing:.2px;}
+.tabs button.active{background:var(--bg-header);color:#fff;}
+.tabs button:hover:not(.active){background:#f3f5f8;}
+
+.view{display:none;}
+.view.active{display:block;}
+
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:var(--gap);margin-bottom:var(--gap);}
+.kpi-card{background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:4px solid var(--c1);}
+.kpi-card.alt{border-left-color:var(--c2);}
+.kpi-card.alt2{border-left-color:var(--c3);}
+.kpi-card.alt3{border-left-color:var(--c4);}
+.kpi-card.alt4{border-left-color:var(--c5);}
+.kpi-card.alt5{border-left-color:var(--c6);}
+.kpi-label{font-size:11.5px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.kpi-value{font-size:23px;font-weight:700;}
+.kpi-change{font-size:12px;font-weight:600;margin-top:3px;}
+.kpi-change.positive{color:var(--positive);}
+.kpi-change.negative{color:var(--negative);}
+.kpi-sub{font-size:11px;color:var(--text-secondary);margin-top:2px;}
+
+.chart-row{display:grid;grid-template-columns:1.4fr 1fr;gap:var(--gap);margin-bottom:var(--gap);}
+.chart-row.three{grid-template-columns:1fr 1fr 1fr;}
+.chart-row.two{grid-template-columns:1fr 1fr;}
+.chart-container{background:var(--bg-card);border-radius:var(--radius);padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.chart-container h3{font-size:13.5px;font-weight:700;margin-bottom:2px;}
+.chart-container .chart-sub{font-size:11.5px;color:var(--text-secondary);margin-bottom:12px;}
+.chart-container canvas{max-height:300px;}
+.chart-container.tall canvas{max-height:340px;}
+
+.insights-section{background:var(--bg-card);border-radius:var(--radius);padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:var(--gap);}
+.insights-section h2{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.insights-section h2 .badge{font-size:10px;background:var(--c1);color:#fff;padding:2px 8px;border-radius:10px;font-weight:600;letter-spacing:.3px;}
+.insight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;}
+.insight-card{background:#f6f8fb;border-radius:8px;padding:14px 16px;border-top:3px solid var(--c1);}
+.insight-card.o2{border-top-color:var(--c2);}
+.insight-card.o3{border-top-color:var(--c3);}
+.insight-card.o4{border-top-color:var(--c4);}
+.insight-card h4{font-size:12.5px;font-weight:700;margin-bottom:6px;}
+.insight-card p{font-size:12.5px;color:var(--text-secondary);}
+
+.table-section{background:var(--bg-card);border-radius:var(--radius);padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow-x:auto;margin-bottom:var(--gap);}
+.table-section h3{font-size:13.5px;font-weight:700;margin-bottom:4px;}
+.table-section .chart-sub{font-size:11.5px;color:var(--text-secondary);margin-bottom:10px;}
+.data-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.data-table thead th{text-align:left;padding:8px 10px;border-bottom:2px solid #dee2e6;color:var(--text-secondary);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;user-select:none;cursor:pointer;}
+.data-table thead th:hover{color:var(--text-primary);background:#f3f5f8;}
+.data-table tbody td{padding:7px 10px;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
+.data-table tbody tr:hover{background:#f8f9fb;}
+.pill{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;}
+.pill.pos{background:#e2f5e9;color:var(--positive);}
+.pill.neg{background:#fbe7e5;color:var(--negative);}
+.pill.neu{background:#eef1f5;color:var(--text-secondary);}
+.search-box{margin-bottom:10px;}
+.search-box input{padding:7px 10px;border:1px solid #d6dce3;border-radius:6px;font-size:12.5px;width:220px;}
+
+.freq-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+.freq-table th{text-align:left;padding:6px 8px;font-size:10.5px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.freq-table td{padding:5px 6px;text-align:center;white-space:nowrap;font-weight:600;color:#fff;font-size:11px;border-radius:3px;}
+.freq-table td.op-name{text-align:left;color:var(--text-primary);font-weight:700;background:transparent;}
+.freq-table tr{border-bottom:4px solid transparent;}
+
+.dashboard-footer{text-align:center;font-size:11px;color:var(--text-secondary);padding:14px 0 6px;}
+.dashboard-footer a{color:var(--c1);}
+
+@media (max-width:900px){
+  .chart-row, .chart-row.three, .chart-row.two{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+}
+@media print{
+  body{background:#fff;}
+  .filters{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="dashboard-container">
+
+  <header class="dashboard-header">
+    <div class="header-top">
+      <div>
+        <h1>Ro-Ro Shipping Executive Dashboard</h1>
+        <div class="subtitle" id="dash-subtitle">Global car-carrier voyage analytics · Loading data…</div>
+      </div>
+      <div class="header-meta" id="header-meta"></div>
+    </div>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Grain</label>
+        <div class="segmented" id="grain-toggle">
+          <button data-grain="annual" class="active">Annual</button>
+          <button data-grain="quarterly">Quarterly</button>
+          <button data-grain="monthly">Monthly</button>
+        </div>
+      </div>
+      <div class="breadcrumb" id="breadcrumb"></div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-view="global" class="active">Global</button>
+    <button data-view="regional">Regional</button>
+    <button data-view="coastal">Coastal Region</button>
+    <button data-view="ports">Port Performance</button>
+    <button data-view="voyages">Voyage Explorer</button>
+    <button data-view="operators">Operator / Owner</button>
+    <button data-view="vessels">Vessels</button>
+  </nav>
+
+  <!-- ==================== GLOBAL ==================== -->
+  <section class="view active" id="view-global">
+    <section class="kpi-row" id="global-kpi-row"></section>
+    <section class="chart-row">
+      <div class="chart-container tall">
+        <h3>Voyages &amp; CEU Deployed Trend</h3>
+        <div class="chart-sub">Bars = voyages (left axis) · Line = total CEU deployed (right axis)</div>
+        <canvas id="globalTrendChart"></canvas>
+      </div>
+      <div class="chart-container tall">
+        <h3>Avg Voyage Duration Trend</h3>
+        <div class="chart-sub">Average total voyage duration (days), with linear trendline</div>
+        <canvas id="globalDurationChart"></canvas>
+      </div>
+    </section>
+    <section class="chart-row three">
+      <div class="chart-container">
+        <h3>Active Fleet &amp; Operators</h3>
+        <div class="chart-sub">Distinct vessels and operators active per period</div>
+        <canvas id="globalFleetChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>Avg Port Time</h3>
+        <div class="chart-sub">Origin vs destination port days (total)</div>
+        <canvas id="globalPortTimeChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>Fleet Segment Mix</h3>
+        <div class="chart-sub">Voyages by sub-segment (PCTC / RoRo Cargo)</div>
+        <canvas id="globalSegmentChart"></canvas>
+      </div>
+    </section>
+    <section class="insights-section">
+      <h2>Market Intelligence &amp; Executive Insights <span class="badge">Data-derived</span></h2>
+      <!-- MARKET_COMMENTARY: refresh with external research -->
+      <div class="insight-grid" id="global-insight-grid"></div>
+    </section>
+  </section>
+
+  <!-- ==================== REGIONAL ==================== -->
+  <section class="view" id="view-regional">
+    <section class="kpi-row" id="regional-kpi-row"></section>
+    <section class="chart-row">
+      <div class="chart-container tall">
+        <h3>Top Trade Lanes by CEU Deployed</h3>
+        <div class="chart-sub">Origin region → Destination region, all-time totals</div>
+        <canvas id="regionalLanesChart"></canvas>
+      </div>
+      <div class="chart-container tall">
+        <h3>Top Lane Trend</h3>
+        <div class="chart-sub">Voyages over time for top 6 lanes</div>
+        <canvas id="regionalTrendChart"></canvas>
+      </div>
+    </section>
+    <section class="table-section">
+      <h3>Regional Trade Lane Leaderboard</h3>
+      <div class="chart-sub">Top 25 origin → destination region pairs by CEU deployed. Click headers to sort.</div>
+      <div id="regional-table-wrap"></div>
+    </section>
+    <section class="insights-section">
+      <h2>Regional Insights <span class="badge">Data-derived</span></h2>
+      <div class="insight-grid" id="regional-insight-grid"></div>
+    </section>
+  </section>
+
+  <!-- ==================== COASTAL ==================== -->
+  <section class="view" id="view-coastal">
+    <section class="kpi-row" id="coastal-kpi-row"></section>
+    <section class="chart-row">
+      <div class="chart-container tall">
+        <h3>Top Coastal Region Lanes by CEU Deployed</h3>
+        <div class="chart-sub">Esgian Coastal Region granularity, origin → destination</div>
+        <canvas id="coastalLanesChart"></canvas>
+      </div>
+      <div class="chart-container tall">
+        <h3>Top Coastal Lane Trend</h3>
+        <div class="chart-sub">Voyages over time for top 6 coastal lanes</div>
+        <canvas id="coastalTrendChart"></canvas>
+      </div>
+    </section>
+    <section class="table-section">
+      <h3>Coastal Region Trade Lane Leaderboard</h3>
+      <div class="chart-sub">Top 30 origin → destination coastal region pairs by CEU deployed.</div>
+      <div id="coastal-table-wrap"></div>
+    </section>
+  </section>
+
+  <!-- ==================== PORTS ==================== -->
+  <section class="view" id="view-ports">
+    <section class="kpi-row" id="ports-kpi-row"></section>
+    <section class="chart-row">
+      <div class="chart-container tall">
+        <h3>Top Ports by Call Volume</h3>
+        <div class="chart-sub">All-time port calls (origin + destination legs combined)</div>
+        <canvas id="portsBarChart"></canvas>
+      </div>
+      <div class="chart-container tall">
+        <h3>Port Call Volume Trend — Top 6 Ports</h3>
+        <div class="chart-sub">Annual port call trend for busiest ports</div>
+        <canvas id="portsTrendChart"></canvas>
+      </div>
+    </section>
+    <section class="table-section">
+      <h3>Port Performance Leaderboard</h3>
+      <div class="chart-sub">Sortable, searchable — port calls, avg port days, CEU handled.</div>
+      <div class="search-box"><input type="text" id="ports-search" placeholder="Search port or country..." oninput="dash.renderPortsTable()"></div>
+      <div id="ports-table-wrap"></div>
+    </section>
+  </section>
+
+  <!-- ==================== VOYAGES ==================== -->
+  <section class="view" id="view-voyages">
+    <section class="kpi-row" id="voyages-kpi-row"></section>
+    <section class="table-section">
+      <h3>Recent Completed Voyages</h3>
+      <div class="chart-sub">Most recent 300 completed voyage legs — vessel, operator, route, dates, duration.</div>
+      <div class="search-box"><input type="text" id="voyages-search" placeholder="Search vessel, operator, port..." oninput="dash.renderVoyagesTable()"></div>
+      <div id="voyages-table-wrap"></div>
+    </section>
+  </section>
+
+  <!-- ==================== OPERATORS ==================== -->
+  <section class="view" id="view-operators">
+    <section class="kpi-row" id="operators-kpi-row"></section>
+    <section class="chart-row">
+      <div class="chart-container tall">
+        <h3>Top Operators by CEU Deployed</h3>
+        <div class="chart-sub">All-time total CEU deployed</div>
+        <canvas id="operatorsBarChart"></canvas>
+      </div>
+      <div class="chart-container tall">
+        <h3>Top Owners by CEU Deployed</h3>
+        <div class="chart-sub">Vessel ownership groups, all-time total CEU deployed</div>
+        <canvas id="ownersBarChart"></canvas>
+      </div>
+    </section>
+    <section class="table-section">
+      <h3>Operator Monthly Voyage Frequency — Top 15 Operators</h3>
+      <div class="chart-sub">Color-coded voyage count per month (last 18 months). Green = high frequency, red = low.</div>
+      <div id="freq-table-wrap" style="overflow-x:auto;"></div>
+    </section>
+    <section class="table-section">
+      <h3>Operator League Table</h3>
+      <div class="chart-sub">Voyages, vessels deployed, CEU deployed, ports served, avg voyage duration.</div>
+      <div class="search-box"><input type="text" id="operators-search" placeholder="Search operator..." oninput="dash.renderOperatorsTable()"></div>
+      <div id="operators-table-wrap"></div>
+    </section>
+    <section class="table-section">
+      <h3>Owner League Table</h3>
+      <div class="chart-sub">Vessel ownership groups — voyages, vessels deployed, CEU deployed.</div>
+      <div id="owners-table-wrap"></div>
+    </section>
+  </section>
+
+  <!-- ==================== VESSELS ==================== -->
+  <section class="view" id="view-vessels">
+    <section class="kpi-row" id="vessels-kpi-row"></section>
+    <section class="chart-row two">
+      <div class="chart-container tall">
+        <h3>Fleet Segment Breakdown</h3>
+        <div class="chart-sub">Vessel count and CEU by sub-segment</div>
+        <canvas id="vesselsSegmentChart"></canvas>
+      </div>
+      <div class="chart-container tall">
+        <h3>Most Active Vessels</h3>
+        <div class="chart-sub">Top 15 vessels by voyage count</div>
+        <canvas id="vesselsBarChart"></canvas>
+      </div>
+    </section>
+    <section class="table-section">
+      <h3>Vessel Utilization Table</h3>
+      <div class="chart-sub">Sortable, searchable — voyages, CEU capacity, avg duration, total distance.</div>
+      <div class="search-box"><input type="text" id="vessels-search" placeholder="Search vessel or operator..." oninput="dash.renderVesselsTable()"></div>
+      <div id="vessels-table-wrap"></div>
+    </section>
+  </section>
+
+  <footer class="dashboard-footer">
+    Ro-Ro Shipping Executive Dashboard · Data: Esgian Ro-Ro voyage master (354K+ voyage legs) ·
+    Live via Supabase RPC · <span id="footer-generated"></span>
+  </footer>
+</div>
+
+<div id="loading-overlay" style="position:fixed;inset:0;background:rgba(238,241,245,0.93);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:18px;">
+  <div style="width:52px;height:52px;border:5px solid #d0dae5;border-top-color:#1b6ca8;border-radius:50%;animation:sb-spin 1s linear infinite;"></div>
+  <div style="font-size:15px;font-weight:600;color:#1b2733;">Loading dashboard data…</div>
+  <div id="load-err" style="font-size:13px;color:#d1473a;display:none;max-width:400px;text-align:center;"></div>
+</div>
+<style>@keyframes sb-spin{to{transform:rotate(360deg);}}</style>
+
+<script>
+const SUPABASE_URL = 'https://jeuqpnhajmatekbzlfne.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpldXFwbmhham1hdGVrYnpsZm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNDQ5NzAsImV4cCI6MjEwMDcyMDk3MH0.hVnlLdqq7NrdLjDok1vBvZ901eFsIbTJ3_VG_kPMsXo';
+
+async function loadDashboardData() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_roro_dashboard_data`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: '{}'
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`HTTP ${res.status}: ${txt.slice(0,200)}`);
+  }
+  return res.json();
+}
+
+const COLORS = ['#1b6ca8','#ef8a17','#2a9d8f','#e76f51','#8d6fb8','#4b8b3b','#c9444d','#5b6b7c','#1d8a99','#b08968'];
+
+function fmt(v, decimals=1){
+  if(v===null||v===undefined||isNaN(v)) return '—';
+  const abs = Math.abs(v);
+  if(abs>=1e9) return (v/1e9).toFixed(decimals)+'B';
+  if(abs>=1e6) return (v/1e6).toFixed(decimals)+'M';
+  if(abs>=1e3) return (v/1e3).toFixed(decimals)+'K';
+  return (+v).toFixed(0);
+}
+function fmtNum(v){ if(v===null||v===undefined||isNaN(v)) return '—'; return Math.round(v).toLocaleString(); }
+function fmtDec(v,d=1){ if(v===null||v===undefined||isNaN(v)) return '—'; return (+v).toFixed(d); }
+function dateLabel(iso, grain){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  if(grain==='monthly') return d.toLocaleDateString('en-US',{year:'2-digit',month:'short'});
+  if(grain==='quarterly') return 'Q'+(Math.floor(d.getUTCMonth()/3)+1)+" '"+String(d.getUTCFullYear()).slice(2);
+  return String(d.getUTCFullYear());
+}
+function keyOf(grain){ return grain==='annual'?'event_year':grain==='quarterly'?'event_quarter':'event_month'; }
+function linearTrend(values){
+  const pts = values.map((v,i)=>[i,v]).filter(p=>p[1]!=null && !isNaN(p[1]));
+  if(pts.length<2) return values.map(()=>null);
+  const n=pts.length, sx=pts.reduce((s,p)=>s+p[0],0), sy=pts.reduce((s,p)=>s+p[1],0);
+  const sxy=pts.reduce((s,p)=>s+p[0]*p[1],0), sxx=pts.reduce((s,p)=>s+p[0]*p[0],0);
+  const slope=(n*sxy-sx*sy)/(n*sxx-sx*sx||1), intercept=(sy-slope*sx)/n;
+  return values.map((v,i)=> v==null?null: slope*i+intercept);
+}
+
+class Dashboard{
+  constructor(data){
+    this.data = data;
+    this.charts = {};
+    this.grain = 'annual';
+    this.sort = {};
+    this.init();
+  }
+  init(){
+    document.querySelectorAll('#grain-toggle button').forEach(b=>{
+      b.onclick = ()=>{
+        document.querySelectorAll('#grain-toggle button').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        this.grain = b.dataset.grain;
+        this.renderAll();
+      };
+    });
+    document.querySelectorAll('#tabs button').forEach(b=>{
+      b.onclick = ()=>{
+        document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        document.getElementById('view-'+b.dataset.view).classList.add('active');
+        document.getElementById('breadcrumb').innerHTML = 'Section: <b>'+b.textContent+'</b>';
+      };
+    });
+    document.getElementById('breadcrumb').innerHTML = 'Section: <b>Global</b>';
+    this.renderAll();
+  }
+  renderAll(){
+    this.renderGlobal();
+    this.renderRegional();
+    this.renderCoastal();
+    this.renderPorts();
+    this.renderVoyages();
+    this.renderOperators();
+    this.renderVessels();
+  }
+  seriesFor(arr){
+    const k = keyOf(this.grain);
+    return (arr||[]).filter(r=>r[k]!=null).sort((a,b)=> new Date(a[k]) - new Date(b[k]));
+  }
+  latest(arr){ const s = this.seriesFor(arr); return s.length? s[s.length-1] : null; }
+  prev(arr){ const s = this.seriesFor(arr); return s.length>1? s[s.length-2] : null; }
+
+  // ---------------- GLOBAL ----------------
+  renderGlobal(){
+    const arr = this.data.global[this.grain] || [];
+    const s = this.seriesFor(arr);
+    const last = this.latest(arr), prev = this.prev(arr);
+    const yoy = (last && prev && prev.total_ceu_deployed) ? ((last.total_ceu_deployed/prev.total_ceu_deployed-1)*100) : null;
+    const kpis = [
+      {label:'Total Voyages', value: fmtNum(this.data.meta.total_voyages), sub:'All periods, all vessels', cls:''},
+      {label:'Voyages (latest period)', value: last?fmtNum(last.voyages):'—', sub:'Most recent '+this.grain.slice(0,-2)+(this.grain==='annual'?'l':''), cls:'alt'},
+      {label:'Active Vessels', value: last?fmtNum(last.active_vessels):'—', sub:'Distinct vessels active', cls:'alt2'},
+      {label:'Active Operators', value: last?fmtNum(last.active_operators):'—', sub:'Distinct operators active', cls:'alt3'},
+      {label:'CEU Deployed', value: last?fmt(last.total_ceu_deployed):'—', sub:'Latest period', change: yoy, changeLabel: yoy!=null?(yoy>=0?'+':'')+yoy.toFixed(1)+'% vs prior':null, cls:'alt4'},
+      {label:'Avg Voyage Duration', value: last?fmtDec(last.avg_voyage_duration_days)+' days':'—', sub:'Avg total duration, latest period', cls:'alt5'},
+      {label:'Avg Port Time', value: last?fmtDec((last.avg_origin_port_days||0)+(last.avg_destination_port_days||0))+' days':'—', sub:'Origin + destination combined', cls:''},
+    ];
+    document.getElementById('global-kpi-row').innerHTML = kpis.map(k=>`
+      <div class="kpi-card ${k.cls}">
+        <div class="kpi-label">${k.label}</div>
+        <div class="kpi-value">${k.value}</div>
+        ${k.changeLabel?`<div class="kpi-change ${k.change>=0?'positive':'negative'}">${k.changeLabel}</div>`:`<div class="kpi-sub">${k.sub||''}</div>`}
+      </div>`).join('');
+
+    const labels = s.map(r=>dateLabel(r[keyOf(this.grain)], this.grain));
+    this._chart('globalTrendChart', {
+      data:{labels, datasets:[
+        {type:'bar', label:'Voyages', data:s.map(r=>r.voyages), backgroundColor:'#1b6ca8CC', borderRadius:3, yAxisID:'y'},
+        {type:'line', label:'CEU Deployed', data:s.map(r=>r.total_ceu_deployed), borderColor:'#ef8a17', backgroundColor:'#ef8a1720', borderWidth:2, pointRadius:2, tension:.25, yAxisID:'y1'}
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+        plugins:{legend:{position:'top', labels:{usePointStyle:true, boxWidth:8, font:{size:10.5}}}},
+        scales:{ x:{grid:{display:false}, ticks:{font:{size:10},maxRotation:0,autoSkip:true}}, y:{beginAtZero:true, ticks:{callback:v=>fmt(v),font:{size:10}}}, y1:{position:'right', grid:{display:false}, ticks:{callback:v=>fmt(v),font:{size:10}}} }
+      }
+    });
+
+    const dur = s.map(r=>r.avg_voyage_duration_days);
+    this._chart('globalDurationChart', {
+      type:'line',
+      data:{labels, datasets:[
+        {label:'Avg Duration (days)', data:dur, borderColor:'#8d6fb8', backgroundColor:'#8d6fb820', borderWidth:2, pointRadius:2, tension:.25, fill:true},
+        {label:'Trend', data: linearTrend(dur), borderColor:'#c9444d', borderDash:[5,4], borderWidth:1.5, pointRadius:0}
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top', labels:{usePointStyle:true, boxWidth:8, font:{size:10.5}}}}, scales:{x:{grid:{display:false}, ticks:{font:{size:10},maxRotation:0,autoSkip:true}}, y:{ticks:{font:{size:10}}}} }
+    });
+
+    this._chart('globalFleetChart', {
+      data:{labels, datasets:[
+        {type:'bar', label:'Active Vessels', data:s.map(r=>r.active_vessels), backgroundColor:'#2a9d8fCC', borderRadius:3},
+        {type:'line', label:'Active Operators', data:s.map(r=>r.active_operators), borderColor:'#e76f51', borderWidth:2, pointRadius:2, tension:.25, yAxisID:'y1'}
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top', labels:{usePointStyle:true, boxWidth:8, font:{size:10}}}}, scales:{x:{grid:{display:false}, ticks:{font:{size:9},maxRotation:0,autoSkip:true}}, y:{ticks:{font:{size:9}}}, y1:{position:'right', grid:{display:false}, ticks:{font:{size:9}}}} }
+    });
+
+    this._chart('globalPortTimeChart', {
+      type:'bar',
+      data:{labels, datasets:[
+        {label:'Origin Port Days', data:s.map(r=>r.avg_origin_port_days), backgroundColor:'#1b6ca8CC', borderRadius:3},
+        {label:'Destination Port Days', data:s.map(r=>r.avg_destination_port_days), backgroundColor:'#ef8a17CC', borderRadius:3}
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top', labels:{usePointStyle:true, boxWidth:8, font:{size:10}}}}, scales:{x:{grid:{display:false}, ticks:{font:{size:9},maxRotation:0,autoSkip:true}}, y:{ticks:{font:{size:9}}}} }
+    });
+
+    const seg = this.data.vessels.segment_breakdown||[];
+    this._chart('globalSegmentChart', {
+      type:'doughnut',
+      data:{labels:seg.map(x=>x.sub_segment), datasets:[{data:seg.map(x=>x.voyages), backgroundColor:COLORS, borderColor:'#fff', borderWidth:2}]},
+      options:{responsive:true, maintainAspectRatio:false, cutout:'58%', plugins:{legend:{position:'bottom', labels:{usePointStyle:true, boxWidth:8, font:{size:10}}}}}
+    });
+
+    this.renderGlobalInsights(s, last);
+  }
+  renderGlobalInsights(s, last){
+    const topLane = (this.data.regional.top_lanes||[])[0];
+    const totalCeuAll = (this.data.regional.top_lanes||[]).reduce((a,x)=>a+(x.total_ceu_deployed||0),0);
+    const laneShare = (topLane && totalCeuAll) ? (topLane.total_ceu_deployed/totalCeuAll*100).toFixed(1) : null;
+    const topOperator = (this.data.operators.leaderboard||[])[0];
+    const opShare = (topOperator && last && last.total_ceu_deployed) ? null : null;
+    const topPort = (this.data.ports.leaderboard||[])[0];
+    const pctc = (this.data.vessels.segment_breakdown||[]).find(x=>x.sub_segment==='PCTC');
+    const cargo = (this.data.vessels.segment_breakdown||[]).find(x=>x.sub_segment==='RoRo Cargo');
+    const pctcShare = (pctc && cargo) ? (pctc.voyages/(pctc.voyages+cargo.voyages)*100).toFixed(1) : null;
+
+    const insights = [];
+    if(topLane) insights.push({cls:'', h:'Dominant trade lane', p:`${topLane.origin_region} → ${topLane.destination_region} is the busiest tracked lane, representing ${laneShare}% of total CEU deployed across the top 25 regional lanes, with ${fmtNum(topLane.voyages)} voyages recorded.`});
+    if(topOperator) insights.push({cls:'o2', h:'Operator concentration', p:`${topOperator.operator} leads the market with ${fmt(topOperator.total_ceu_deployed)} CEU deployed across ${fmtNum(topOperator.voyages)} voyages and ${topOperator.vessels_deployed} vessels — the largest deployed fleet footprint in the dataset.`});
+    if(topPort) insights.push({cls:'o3', h:'Busiest gateway', p:`${topPort.port_name} (${topPort.country}) recorded the highest call volume with ${fmtNum(topPort.port_calls)} port calls and ${fmt(topPort.ceu_handled)} CEU handled, at an average total port time of ${fmtDec(topPort.avg_port_days_total)} days.`});
+    if(pctcShare) insights.push({cls:'o4', h:'Fleet segment mix', p:`PCTC (Pure Car & Truck Carrier) tonnage accounts for ${pctcShare}% of tracked voyages, with the remainder on dedicated RoRo Cargo vessels — reflecting the dominance of finished-vehicle logistics in this dataset.`});
+    document.getElementById('global-insight-grid').innerHTML = insights.map(i=>`<div class="insight-card ${i.cls}"><h4>${i.h}</h4><p>${i.p}</p></div>`).join('');
+  }
+
+  // ---------------- REGIONAL ----------------
+  renderRegional(){
+    const lanes = (this.data.regional.top_lanes||[]).slice(0,12);
+    const kpis = [
+      {label:'Tracked Lanes', value: fmtNum((this.data.regional.top_lanes||[]).length)+'+', sub:'Origin → destination region pairs', cls:''},
+      {label:'Top Lane', value: lanes[0]?lanes[0].origin_region+' → '+lanes[0].destination_region:'—', sub: lanes[0]?fmt(lanes[0].total_ceu_deployed)+' CEU deployed':'', cls:'alt'},
+      {label:'Top Lane Voyages', value: lanes[0]?fmtNum(lanes[0].voyages):'—', sub:'All-time', cls:'alt2'},
+    ];
+    document.getElementById('regional-kpi-row').innerHTML = kpis.map(k=>`
+      <div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:16px;">${k.value}</div><div class="kpi-sub">${k.sub||''}</div></div>`).join('');
+
+    this._chart('regionalLanesChart', {
+      type:'bar',
+      data:{labels: lanes.map(l=>l.origin_region+' → '+l.destination_region), datasets:[{data:lanes.map(l=>l.total_ceu_deployed), backgroundColor:COLORS, borderRadius:4}]},
+      options:{responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, ticks:{callback:v=>fmt(v), font:{size:9.5}}}, y:{ticks:{font:{size:9.5}}}}}
+    });
+
+    const laneNames = (this.data.regional.top_lane_names||[]).slice(0,6);
+    const annual = this.data.regional.annual || [];
+    const k = keyOf(this.grain==='monthly'?'annual':this.grain) ; // regional payload has only annual grain
+    const years = [...new Set(annual.map(r=>r.event_year))].sort();
+    const datasets = laneNames.map((ln,i)=>{
+      const [o,d] = ln.split(' -> ');
+      return {
+        label: ln,
+        data: years.map(y=>{
+          const rec = annual.find(r=>r.event_year===y && r.origin_region===o && r.destination_region===d);
+          return rec ? rec.voyages : 0;
+        }),
+        borderColor: COLORS[i%COLORS.length], backgroundColor: COLORS[i%COLORS.length]+'20', borderWidth:2, pointRadius:2, tension:.25
+      };
+    });
+    this._chart('regionalTrendChart', {
+      type:'line',
+      data:{labels: years.map(y=>new Date(y).getUTCFullYear()), datasets},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{usePointStyle:true, boxWidth:8, font:{size:9}}}}, scales:{x:{grid:{display:false}, ticks:{font:{size:10}}}, y:{ticks:{font:{size:10}}}}}
+    });
+
+    const all = this.data.regional.top_lanes||[];
+    const sortCol = this.sort.regional || {c:'total_ceu_deployed', d:'desc'};
+    const rows = [...all].sort((a,b)=> sortCol.d==='asc'? (a[sortCol.c]-b[sortCol.c]) : (b[sortCol.c]-a[sortCol.c]));
+    let html = '<table class="data-table"><thead><tr>'+
+      ['origin_region:Origin','destination_region:Destination','voyages:Voyages','total_ceu_deployed:CEU Deployed','avg_voyage_duration_days:Avg Duration','avg_distance_nm:Avg Distance']
+      .map(c=>{const [f,l]=c.split(':'); return `<th onclick="dash.sortRegional('${f}')">${l}${sortCol.c===f?(sortCol.d==='asc'?' ▲':' ▼'):''}</th>`;}).join('')
+      +'</tr></thead><tbody>';
+    rows.forEach(r=>{
+      html += `<tr><td>${r.origin_region}</td><td>${r.destination_region}</td><td>${fmtNum(r.voyages)}</td><td>${fmt(r.total_ceu_deployed)}</td><td>${fmtDec(r.avg_voyage_duration_days)}</td><td>${fmtDec(r.avg_distance_nm,0)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('regional-table-wrap').innerHTML = html;
+
+    const insights = [];
+    if(lanes[0]) insights.push({cls:'', h:'Leading corridor', p:`${lanes[0].origin_region} → ${lanes[0].destination_region} leads all tracked corridors with ${fmt(lanes[0].total_ceu_deployed)} CEU deployed over ${fmtNum(lanes[0].voyages)} voyages.`});
+    const intraRegional = lanes.filter(l=>l.origin_region===l.destination_region);
+    if(intraRegional.length) insights.push({cls:'o2', h:'Intra-regional dominance', p:`${intraRegional.length} of the top ${lanes.length} lanes are intra-regional (same origin/destination region), led by ${intraRegional[0].origin_region}, underscoring the short-sea, feeder-heavy nature of much of Ro-Ro trade.`});
+    document.getElementById('regional-insight-grid') && (document.getElementById('regional-insight-grid').innerHTML = insights.map(i=>`<div class="insight-card ${i.cls}"><h4>${i.h}</h4><p>${i.p}</p></div>`).join(''));
+  }
+  sortRegional(col){
+    const cur = this.sort.regional || {c:'total_ceu_deployed', d:'desc'};
+    this.sort.regional = cur.c===col ? {c:col, d: cur.d==='asc'?'desc':'asc'} : {c:col, d:'desc'};
+    this.renderRegional();
+  }
+
+  // ---------------- COASTAL ----------------
+  renderCoastal(){
+    const lanes = (this.data.coastal.top_lanes||[]).slice(0,12);
+    const kpis = [
+      {label:'Tracked Coastal Lanes', value: fmtNum((this.data.coastal.top_lanes||[]).length)+'+', sub:'Coastal region pairs', cls:''},
+      {label:'Top Coastal Lane', value: lanes[0]?lanes[0].origin_coastal_region+' → '+lanes[0].destination_coastal_region:'—', sub: lanes[0]?fmt(lanes[0].total_ceu_deployed)+' CEU deployed':'', cls:'alt'},
+      {label:'Top Lane Voyages', value: lanes[0]?fmtNum(lanes[0].voyages):'—', sub:'All-time', cls:'alt2'},
+    ];
+    document.getElementById('coastal-kpi-row').innerHTML = kpis.map(k=>`
+      <div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:15px;">${k.value}</div><div class="kpi-sub">${k.sub||''}</div></div>`).join('');
+
+    this._chart('coastalLanesChart', {
+      type:'bar',
+      data:{labels: lanes.map(l=>l.origin_coastal_region+' → '+l.destination_coastal_region), datasets:[{data:lanes.map(l=>l.total_ceu_deployed), backgroundColor:COLORS, borderRadius:4}]},
+      options:{responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, ticks:{callback:v=>fmt(v), font:{size:9}}}, y:{ticks:{font:{size:9}}}}}
+    });
+
+    const annual = this.data.coastal.annual || [];
+    const laneKeys = [...new Map(annual.map(r=>[r.origin_coastal_region+' -> '+r.destination_coastal_region, r])).keys()];
+    const totals = {};
+    annual.forEach(r=>{ const k=r.origin_coastal_region+' -> '+r.destination_coastal_region; totals[k]=(totals[k]||0)+(r.total_ceu_deployed||0); });
+    const top6 = Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,6).map(x=>x[0]);
+    const years = [...new Set(annual.map(r=>r.event_year))].sort();
+    const datasets = top6.map((ln,i)=>{
+      const [o,d] = ln.split(' -> ');
+      return { label: ln, data: years.map(y=>{ const rec = annual.find(r=>r.event_year===y && r.origin_coastal_region===o && r.destination_coastal_region===d); return rec?rec.voyages:0; }),
+        borderColor: COLORS[i%COLORS.length], backgroundColor: COLORS[i%COLORS.length]+'20', borderWidth:2, pointRadius:2, tension:.25 };
+    });
+    this._chart('coastalTrendChart', {
+      type:'line', data:{labels: years.map(y=>new Date(y).getUTCFullYear()), datasets},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{usePointStyle:true, boxWidth:8, font:{size:9}}}}, scales:{x:{grid:{display:false}, ticks:{font:{size:10}}}, y:{ticks:{font:{size:10}}}}}
+    });
+
+    const all = this.data.coastal.top_lanes||[];
+    let html = '<table class="data-table"><thead><tr><th>Origin</th><th>Destination</th><th>Voyages</th><th>CEU Deployed</th><th>Avg Duration</th></tr></thead><tbody>';
+    all.forEach(r=>{ html += `<tr><td>${r.origin_coastal_region}</td><td>${r.destination_coastal_region}</td><td>${fmtNum(r.voyages)}</td><td>${fmt(r.total_ceu_deployed)}</td><td>${fmtDec(r.avg_voyage_duration_days)}</td></tr>`; });
+    html += '</tbody></table>';
+    document.getElementById('coastal-table-wrap').innerHTML = html;
+  }
+
+  // ---------------- PORTS ----------------
+  renderPorts(){
+    const lb = this.data.ports.leaderboard||[];
+    const top = lb.slice(0,15);
+    const kpis = [
+      {label:'Ports Tracked', value: fmtNum(lb.length), sub:'With recorded port calls', cls:''},
+      {label:'Busiest Port', value: top[0]?top[0].port_name:'—', sub: top[0]?fmtNum(top[0].port_calls)+' calls':'', cls:'alt'},
+      {label:'Avg Port Days (top 15)', value: fmtDec(top.reduce((a,x)=>a+(x.avg_port_days_total||0),0)/(top.length||1)), sub:'Total port time', cls:'alt2'},
+      {label:'Total CEU Handled (top 15)', value: fmt(top.reduce((a,x)=>a+(x.ceu_handled||0),0)), sub:'Combined leading ports', cls:'alt3'},
+    ];
+    document.getElementById('ports-kpi-row').innerHTML = kpis.map(k=>`
+      <div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:18px;">${k.value}</div><div class="kpi-sub">${k.sub||''}</div></div>`).join('');
+
+    this._chart('portsBarChart', {
+      type:'bar',
+      data:{labels: top.map(p=>p.port_name), datasets:[{data:top.map(p=>p.port_calls), backgroundColor:COLORS.concat(COLORS), borderRadius:4}]},
+      options:{responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, ticks:{font:{size:9}}}, y:{ticks:{font:{size:9.5}}}}}
+    });
+
+    const annualTop = this.data.ports.annual_top||[];
+    const top6names = top.slice(0,6).map(p=>p.port_name);
+    const years = [...new Set(annualTop.map(r=>r.event_year))].sort();
+    const datasets = top6names.map((name,i)=>({
+      label:name, data: years.map(y=>{ const rec = annualTop.find(r=>r.event_year===y && r.port_name===name); return rec? rec.port_calls : 0; }),
+      borderColor: COLORS[i%COLORS.length], backgroundColor: COLORS[i%COLORS.length]+'20', borderWidth:2, pointRadius:2, tension:.25
+    }));
+    this._chart('portsTrendChart', {
+      type:'line', data:{labels: years.map(y=>new Date(y).getUTCFullYear()), datasets},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{usePointStyle:true, boxWidth:8, font:{size:9}}}}, scales:{x:{grid:{display:false}, ticks:{font:{size:10}}}, y:{ticks:{font:{size:10}}}}}
+    });
+
+    this.renderPortsTable();
+  }
+  renderPortsTable(){
+    const search = (document.getElementById('ports-search').value||'').toLowerCase();
+    let rows = (this.data.ports.leaderboard||[]).filter(r=> !search || r.port_name.toLowerCase().includes(search) || (r.country||'').toLowerCase().includes(search));
+    const sortCol = this.sort.ports || {c:'port_calls', d:'desc'};
+    rows = [...rows].sort((a,b)=> sortCol.d==='asc'? ((a[sortCol.c]??0)-(b[sortCol.c]??0)) : ((b[sortCol.c]??0)-(a[sortCol.c]??0)));
+    let html = '<table class="data-table"><thead><tr>'+
+      ['port_name:Port','country:Country','region:Region','port_calls:Port Calls','avg_port_days_total:Avg Port Days','avg_port_days_berthed:Avg Berthed Days','ceu_handled:CEU Handled']
+      .map(c=>{const [f,l]=c.split(':'); return `<th onclick="dash.sortPorts('${f}')">${l}${sortCol.c===f?(sortCol.d==='asc'?' ▲':' ▼'):''}</th>`;}).join('')
+      +'</tr></thead><tbody>';
+    rows.slice(0,100).forEach(r=>{
+      html += `<tr><td><b>${r.port_name}</b></td><td>${r.country||'—'}</td><td>${r.region||'—'}</td><td>${fmtNum(r.port_calls)}</td><td>${fmtDec(r.avg_port_days_total)}</td><td>${fmtDec(r.avg_port_days_berthed)}</td><td>${fmt(r.ceu_handled)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('ports-table-wrap').innerHTML = html;
+  }
+  sortPorts(col){
+    const cur = this.sort.ports || {c:'port_calls', d:'desc'};
+    this.sort.ports = cur.c===col ? {c:col, d: cur.d==='asc'?'desc':'asc'} : {c:col, d:'desc'};
+    this.renderPortsTable();
+  }
+
+  // ---------------- VOYAGES ----------------
+  renderVoyages(){
+    const v = this.data.voyages_recent||[];
+    const kpis = [
+      {label:'Recent Voyages Loaded', value: fmtNum(v.length), sub:'Most recent completed legs', cls:''},
+      {label:'Avg Duration', value: fmtDec(v.reduce((a,x)=>a+(x.days_total_duration||0),0)/(v.length||1))+' days', sub:'Across loaded voyages', cls:'alt'},
+      {label:'Avg Distance', value: fmtDec(v.reduce((a,x)=>a+(x.distance_actual||0),0)/(v.length||1),0)+' nm', sub:'Across loaded voyages', cls:'alt2'},
+    ];
+    document.getElementById('voyages-kpi-row').innerHTML = kpis.map(k=>`
+      <div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:18px;">${k.value}</div><div class="kpi-sub">${k.sub||''}</div></div>`).join('');
+    this.renderVoyagesTable();
+  }
+  renderVoyagesTable(){
+    const search = (document.getElementById('voyages-search').value||'').toLowerCase();
+    let rows = (this.data.voyages_recent||[]).filter(r=> !search ||
+      (r.vessel_name||'').toLowerCase().includes(search) || (r.operator||'').toLowerCase().includes(search) ||
+      (r.origin_port_name||'').toLowerCase().includes(search) || (r.destination_port_name||'').toLowerCase().includes(search));
+    let html = '<table class="data-table"><thead><tr><th>Vessel</th><th>Operator</th><th>Sub-segment</th><th>CEU</th><th>Origin</th><th>Destination</th><th>Departure</th><th>Arrival</th><th>Duration</th><th>Distance</th></tr></thead><tbody>';
+    rows.slice(0,300).forEach(r=>{
+      const dep = r.departure_ts ? new Date(r.departure_ts).toLocaleDateString() : '—';
+      const arr = r.arrival_ts ? new Date(r.arrival_ts).toLocaleDateString() : '—';
+      html += `<tr><td><b>${r.vessel_name||'—'}</b></td><td>${r.operator||'—'}</td><td>${r.sub_segment||'—'}</td><td>${fmtNum(r.ceu)}</td><td>${r.origin_port_name||'—'}</td><td>${r.destination_port_name||'—'}</td><td>${dep}</td><td>${arr}</td><td>${fmtDec(r.days_total_duration)} d</td><td>${fmtDec(r.distance_actual,0)} nm</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('voyages-table-wrap').innerHTML = html;
+  }
+
+  // ---------------- OPERATORS / OWNERS ----------------
+  renderOperators(){
+    const ops = this.data.operators.leaderboard||[];
+    const owners = this.data.owners.leaderboard||[];
+    const kpis = [
+      {label:'Operators Tracked', value: fmtNum(ops.length), sub:'With recorded voyages', cls:''},
+      {label:'Top Operator', value: ops[0]?ops[0].operator:'—', sub: ops[0]?fmt(ops[0].total_ceu_deployed)+' CEU deployed':'', cls:'alt'},
+      {label:'Owners Tracked', value: fmtNum(owners.length), sub:'Vessel ownership groups', cls:'alt2'},
+      {label:'Top Owner', value: owners[0]?owners[0].owner:'—', sub: owners[0]?fmt(owners[0].total_ceu_deployed)+' CEU deployed':'', cls:'alt3'},
+    ];
+    document.getElementById('operators-kpi-row').innerHTML = kpis.map(k=>`
+      <div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:16px;">${k.value}</div><div class="kpi-sub">${k.sub||''}</div></div>`).join('');
+
+    const top = ops.slice(0,12);
+    this._chart('operatorsBarChart', {
+      type:'bar',
+      data:{labels: top.map(o=>o.operator), datasets:[{data:top.map(o=>o.total_ceu_deployed), backgroundColor:COLORS.concat(COLORS), borderRadius:4}]},
+      options:{responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, ticks:{callback:v=>fmt(v), font:{size:9}}}, y:{ticks:{font:{size:9.5}}}}}
+    });
+    const topOwners = owners.slice(0,12);
+    this._chart('ownersBarChart', {
+      type:'bar',
+      data:{labels: topOwners.map(o=>o.owner), datasets:[{data:topOwners.map(o=>o.total_ceu_deployed), backgroundColor:COLORS.concat(COLORS), borderRadius:4}]},
+      options:{responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, ticks:{callback:v=>fmt(v), font:{size:9}}}, y:{ticks:{font:{size:9.5}}}}}
+    });
+
+    this.renderFrequencyTable();
+    this.renderOperatorsTable();
+    this.renderOwnersTable();
+  }
+  renderFrequencyTable(){
+    const freq = this.data.operators.monthly_frequency||[];
+    const months = [...new Set(freq.map(r=>r.event_month))].sort();
+    const opTotals = {};
+    freq.forEach(r=>{ opTotals[r.operator]=(opTotals[r.operator]||0)+r.voyages; });
+    const opsSorted = Object.entries(opTotals).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+    const maxV = Math.max(...freq.map(r=>r.voyages), 1);
+    const colorFor = (v)=>{
+      if(v==null) return '#e9edf1';
+      const t = Math.min(v/maxV, 1);
+      // red (low) -> yellow -> green (high)
+      const r = t<0.5 ? 255 : Math.round(255*(1-(t-0.5)*2));
+      const g = t<0.5 ? Math.round(255*(t*2)) : 200;
+      return `rgb(${r},${g},80)`;
+    };
+    let html = '<table class="freq-table"><thead><tr><th>Operator</th>'+months.map(m=>`<th>${dateLabel(m,'monthly')}</th>`).join('')+'</tr></thead><tbody>';
+    opsSorted.forEach(op=>{
+      html += `<tr><td class="op-name">${op}</td>`;
+      months.forEach(m=>{
+        const rec = freq.find(r=>r.operator===op && r.event_month===m);
+        const v = rec ? rec.voyages : null;
+        html += `<td style="background:${colorFor(v)}">${v!=null?v:''}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('freq-table-wrap').innerHTML = html;
+  }
+  renderOperatorsTable(){
+    const search = (document.getElementById('operators-search').value||'').toLowerCase();
+    let rows = (this.data.operators.leaderboard||[]).filter(r=> !search || r.operator.toLowerCase().includes(search));
+    const sortCol = this.sort.operators || {c:'total_ceu_deployed', d:'desc'};
+    rows = [...rows].sort((a,b)=> sortCol.d==='asc'? ((a[sortCol.c]??0)-(b[sortCol.c]??0)) : ((b[sortCol.c]??0)-(a[sortCol.c]??0)));
+    let html = '<table class="data-table"><thead><tr>'+
+      ['operator:Operator','operator_type:Type','voyages:Voyages','vessels_deployed:Vessels','total_ceu_deployed:CEU Deployed','avg_voyage_duration_days:Avg Duration','ports_served:Ports Served']
+      .map(c=>{const [f,l]=c.split(':'); return `<th onclick="dash.sortOperators('${f}')">${l}${sortCol.c===f?(sortCol.d==='asc'?' ▲':' ▼'):''}</th>`;}).join('')
+      +'</tr></thead><tbody>';
+    rows.forEach(r=>{
+      html += `<tr><td><b>${r.operator}</b></td><td>${r.operator_type||'—'}</td><td>${fmtNum(r.voyages)}</td><td>${fmtNum(r.vessels_deployed)}</td><td>${fmt(r.total_ceu_deployed)}</td><td>${fmtDec(r.avg_voyage_duration_days)}</td><td>${fmtNum(r.ports_served)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('operators-table-wrap').innerHTML = html;
+  }
+  sortOperators(col){
+    const cur = this.sort.operators || {c:'total_ceu_deployed', d:'desc'};
+    this.sort.operators = cur.c===col ? {c:col, d: cur.d==='asc'?'desc':'asc'} : {c:col, d:'desc'};
+    this.renderOperatorsTable();
+  }
+  renderOwnersTable(){
+    const rows = this.data.owners.leaderboard||[];
+    let html = '<table class="data-table"><thead><tr><th>Owner</th><th>Voyages</th><th>Vessels Deployed</th><th>CEU Deployed</th><th>Avg Duration</th></tr></thead><tbody>';
+    rows.forEach(r=>{ html += `<tr><td><b>${r.owner}</b></td><td>${fmtNum(r.voyages)}</td><td>${fmtNum(r.vessels_deployed)}</td><td>${fmt(r.total_ceu_deployed)}</td><td>${fmtDec(r.avg_voyage_duration_days)}</td></tr>`; });
+    html += '</tbody></table>';
+    document.getElementById('owners-table-wrap').innerHTML = html;
+  }
+
+  // ---------------- VESSELS ----------------
+  renderVessels(){
+    const vs = this.data.vessels.leaderboard||[];
+    const seg = this.data.vessels.segment_breakdown||[];
+    const kpis = [
+      {label:'Vessels Tracked', value: fmtNum(vs.length)+'+', sub:'Active in dataset', cls:''},
+      {label:'Most Active Vessel', value: vs[0]?vs[0].vessel_name:'—', sub: vs[0]?fmtNum(vs[0].voyages)+' voyages':'', cls:'alt'},
+      {label:'Total Fleet CEU (segments)', value: fmt(seg.reduce((a,x)=>a+(x.ceu_capacity_sum||0),0)), sub:'Sum across all voyages', cls:'alt2'},
+      {label:'Avg Vessel Duration', value: fmtDec(vs.reduce((a,x)=>a+(x.avg_voyage_duration_days||0),0)/(vs.length||1)) + ' days', sub:'Across leaderboard vessels', cls:'alt3'},
+    ];
+    document.getElementById('vessels-kpi-row').innerHTML = kpis.map(k=>`
+      <div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:16px;">${k.value}</div><div class="kpi-sub">${k.sub||''}</div></div>`).join('');
+
+    this._chart('vesselsSegmentChart', {
+      type:'bar',
+      data:{labels: seg.map(s=>s.sub_segment), datasets:[
+        {label:'Vessel Count', data:seg.map(s=>s.vessel_count), backgroundColor:'#1b6ca8CC', borderRadius:4, yAxisID:'y'},
+        {label:'Voyages', data:seg.map(s=>s.voyages), backgroundColor:'#ef8a17CC', borderRadius:4, yAxisID:'y1'}
+      ]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top', labels:{usePointStyle:true, boxWidth:8, font:{size:10}}}}, scales:{y:{beginAtZero:true, ticks:{font:{size:10}}}, y1:{position:'right', grid:{display:false}, ticks:{font:{size:10}}}}}
+    });
+
+    const top = vs.slice(0,15);
+    this._chart('vesselsBarChart', {
+      type:'bar',
+      data:{labels: top.map(v=>v.vessel_name), datasets:[{data:top.map(v=>v.voyages), backgroundColor:COLORS.concat(COLORS), borderRadius:4}]},
+      options:{responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, ticks:{font:{size:9}}}, y:{ticks:{font:{size:9}}}}}
+    });
+
+    this.renderVesselsTable();
+  }
+  renderVesselsTable(){
+    const search = (document.getElementById('vessels-search').value||'').toLowerCase();
+    let rows = (this.data.vessels.leaderboard||[]).filter(r=> !search || (r.vessel_name||'').toLowerCase().includes(search) || (r.operator||'').toLowerCase().includes(search));
+    const sortCol = this.sort.vessels || {c:'voyages', d:'desc'};
+    rows = [...rows].sort((a,b)=> sortCol.d==='asc'? ((a[sortCol.c]??0)-(b[sortCol.c]??0)) : ((b[sortCol.c]??0)-(a[sortCol.c]??0)));
+    let html = '<table class="data-table"><thead><tr>'+
+      ['vessel_name:Vessel','sub_segment:Segment','operator:Operator','voyages:Voyages','vessel_ceu_capacity:CEU Capacity','avg_voyage_duration_days:Avg Duration','total_distance_nm:Total Distance']
+      .map(c=>{const [f,l]=c.split(':'); return `<th onclick="dash.sortVessels('${f}')">${l}${sortCol.c===f?(sortCol.d==='asc'?' ▲':' ▼'):''}</th>`;}).join('')
+      +'</tr></thead><tbody>';
+    rows.slice(0,150).forEach(r=>{
+      html += `<tr><td><b>${r.vessel_name||'—'}</b></td><td>${r.sub_segment||'—'}</td><td>${r.operator||'—'}</td><td>${fmtNum(r.voyages)}</td><td>${fmtNum(r.vessel_ceu_capacity)}</td><td>${fmtDec(r.avg_voyage_duration_days)}</td><td>${fmt(r.total_distance_nm)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('vessels-table-wrap').innerHTML = html;
+  }
+  sortVessels(col){
+    const cur = this.sort.vessels || {c:'voyages', d:'desc'};
+    this.sort.vessels = cur.c===col ? {c:col, d: cur.d==='asc'?'desc':'asc'} : {c:col, d:'desc'};
+    this.renderVesselsTable();
+  }
+
+  _chart(id, config){
+    const el = document.getElementById(id);
+    if(!el) return;
+    const ctx = el.getContext('2d');
+    if(this.charts[id]) this.charts[id].destroy();
+    this.charts[id] = new Chart(ctx, config);
+  }
+}
+
+(async () => {
+  const overlay = document.getElementById('loading-overlay');
+  const errEl   = document.getElementById('load-err');
+  try {
+    const data = await loadDashboardData();
+    document.getElementById('dash-subtitle').textContent =
+      `${(data.meta.total_voyages||0).toLocaleString()} voyage legs · ${new Date(data.meta.data_from).getUTCFullYear()}–${new Date(data.meta.data_through).getUTCFullYear()} · Global / Regional / Coastal / Port / Voyage / Operator / Vessel views`;
+    document.getElementById('header-meta').textContent = 'Data updated ' + new Date(data.meta.generated_at).toLocaleDateString();
+    document.getElementById('footer-generated').textContent = 'Generated ' + new Date(data.meta.generated_at).toLocaleString();
+    overlay.style.display = 'none';
+    window.dash = new Dashboard(data);
+  } catch(err) {
+    errEl.textContent = 'Failed to load data: ' + err.message;
+    errEl.style.display = 'block';
+    document.querySelector('#loading-overlay div:nth-child(1)').style.display = 'none';
+    document.querySelector('#loading-overlay div:nth-child(2)').style.display = 'none';
+    console.error(err);
+  }
+})();
+</script>
+</body>
+</html>
