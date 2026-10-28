@@ -12,7 +12,7 @@ materialized-view cache (sub-millisecond reads) — no static data file bundled 
 
 - `dashboard_views.sql` — Postgres view definitions (`v_global_summary`, `v_regional_summary`,
   `v_coastal_region_summary`, `v_port_performance`, `v_voyage_detail`, `v_operator_summary`,
-  `v_owner_summary`, `v_vessel_summary`), applied to Supabase project `jeuqpnhajmatekbzlfne` (Maritime Shipping)
+  `v_owner_summary`, `v_vessel_summary`), applied to Supabase project `pkjnbjympugwmuylfjxp` (Ro-Ro Shipping)
 - `rpc_migration.sql` — the original `get_roro_dashboard_data()` SQL function (SECURITY DEFINER) that
   aggregates all 8 views into a single JSON payload. Superseded by the caching layer below (kept for
   reference of the aggregation logic — now runs as `compute_roro_dashboard_data()`).
@@ -24,13 +24,13 @@ materialized-view cache (sub-millisecond reads) — no static data file bundled 
   from Supabase on load
 - `assemble.py` — copies `dashboard_template.html` -> `index.html`
 - `index.html` — the deployed dashboard (this is what GitHub Pages serves)
-- `upload_roro_trades.py` — reloads `Data/Ro-Ro Trades.csv` into the Supabase `roro_trades` table, then
+- `load_roro_to_supabase.py` — loads the Esgian CSVs (trades, canal transits, port/operator/owner/vessel references) into the Supabase project (`--reload` to replace existing rows, or name a table to load just that one), then
   calls `refresh_roro_dashboard_cache()` so the dashboard picks up the new data immediately
 - `market_intelligence_commentary.md` — sourced market commentary (fleet supply, rates, China export
   demand, Red Sea/Cape routing, European port congestion, EU ETS/FuelEU regulation), integrated into
   the dashboard's insight cards
 - `Data/`, `References/` — proprietary Esgian source CSVs, kept local only (git-ignored, not pushed to
-  this public repo). The dashboard never reads these directly at runtime — only `upload_roro_trades.py`
+  this public repo). The dashboard never reads these directly at runtime — only `load_roro_to_supabase.py`
   does, to load them into Supabase.
 
 ## Refresh workflow (monthly)
@@ -38,7 +38,12 @@ materialized-view cache (sub-millisecond reads) — no static data file bundled 
 1. Export the latest voyage data to `Data/Ro-Ro Trades.csv` (same columns as before).
 2. Reload it into Supabase and refresh the dashboard cache in one step:
    ```
-   python upload_roro_trades.py
+   python load_roro_to_supabase.py --reload
+   ```
+   If the cache refresh at the end times out through the API (it can with 400k+ rows), run this in the
+   Supabase SQL editor instead:
+   ```
+   set statement_timeout='600s'; select refresh_roro_dashboard_cache();
    ```
    (this truncates + reloads `roro_trades`, then calls `refresh_roro_dashboard_cache()` automatically)
 3. The analytical views recompute from the freshly reloaded data, and the materialized cache is rebuilt
