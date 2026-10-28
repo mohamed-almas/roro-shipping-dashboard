@@ -335,7 +335,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-s
   </section>
 
   <footer class="dashboard-footer">
-    Ro-Ro Shipping Executive Dashboard · Data: Esgian Ro-Ro voyage master (354K+ voyage legs) ·
+    Ro-Ro Shipping Executive Dashboard · Data: Esgian Ro-Ro voyage master (400K+ voyage legs) ·
     Live via Supabase RPC · <span id="footer-generated"></span>
   </footer>
 </div>
@@ -450,7 +450,7 @@ class Dashboard{
     const yoy = (last && prev && prev.total_ceu_deployed) ? ((last.total_ceu_deployed/prev.total_ceu_deployed-1)*100) : null;
     const kpis = [
       {label:'Total Voyages', value: fmtNum(this.data.meta.total_voyages), sub:'All periods, all vessels', cls:''},
-      {label:'Voyages (latest period)', value: last?fmtNum(last.voyages):'—', sub:'Most recent '+this.grain.slice(0,-2)+(this.grain==='annual'?'l':''), cls:'alt'},
+      {label:'Voyages (latest period)', value: last?fmtNum(last.voyages):'—', sub:'Most recent '+({annual:'year',quarterly:'quarter',monthly:'month'})[this.grain], cls:'alt'},
       {label:'Active Vessels', value: last?fmtNum(last.active_vessels):'—', sub:'Distinct vessels active', cls:'alt2'},
       {label:'Active Operators', value: last?fmtNum(last.active_operators):'—', sub:'Distinct operators active', cls:'alt3'},
       {label:'CEU Deployed', value: last?fmt(last.total_ceu_deployed):'—', sub:'Latest period', change: yoy, changeLabel: yoy!=null?(yoy>=0?'+':'')+yoy.toFixed(1)+'% vs prior':null, cls:'alt4'},
